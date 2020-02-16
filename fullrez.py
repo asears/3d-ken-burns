@@ -30,7 +30,7 @@ import zipfile
 
 ##########################################################
 
-assert(int(str('').join(torch.__version__.split('.')[0:2])) >= 12) # requires at least pytorch version 1.2.0
+assert(int(str('').join(torch.__version__.split('.')[0:3])) >= 120) # requires at least pytorch version 1.2.0
 
 torch.set_grad_enabled(False) # make sure to not compute gradients for computational performance
 
@@ -50,17 +50,18 @@ exec(open('./models/pointcloud-inpainting.py', 'r').read())
 ##########################################################
 
 arguments_strIn = './images/doublestrike.jpg'
-arguments_strOut = './videos/autozoom.mp4'
-arguments_strFps = '25'
+arguments_strOut = './videos/fullrez.mp4'
+arguments_strFps = '30'
+arguments_strBitRate = "12M"
 
 for strOption, strArgument in getopt.getopt(sys.argv[1:], '', [ strParameter[2:] + '=' for strParameter in sys.argv[1::2] ])[0]:
 	if strOption == '--fps' and strArgument != '': arguments_strFps = strArgument # allow FPS value selection from cmd line
+	if strOption == '--bitrate' and strArgument != '': arguments_strBitRate = strArgument # allow FPS value selection from cmd line
 	if strOption == '--in' and strArgument != '': arguments_strIn = strArgument # path to the input image
 	if strOption == '--out' and strArgument != '': arguments_strOut = strArgument # path to where the output should be stored
 	# end
 
 	##########################################################
-
 if __name__ == '__main__':
 	numpyImage = cv2.imread(filename=arguments_strIn, flags=cv2.IMREAD_COLOR)
 
@@ -69,32 +70,33 @@ if __name__ == '__main__':
 
 	dblRatio = float(intWidth) / float(intHeight)
 
-	intWidth = min(int(1024 * dblRatio), 1024)
-	intHeight = min(int(1024 / dblRatio), 1024)
-
-	numpyImage = cv2.resize(src=numpyImage, dsize=(intWidth, intHeight), fx=0.0, fy=0.0, interpolation=cv2.INTER_AREA)
-
 	process_load(numpyImage, {})
 
 	objectFrom = {
-		'dblCenterU': intWidth / 2.0,
-		'dblCenterV': intHeight / 2.0,
-		'intCropWidth': int(math.floor(0.97 * intWidth)),
-		'intCropHeight': int(math.floor(0.97 * intHeight))
+	'dblCenterU': intWidth / 2.0, #You can change these but many settings will crash it
+	'dblCenterV': intHeight / 2.0, #You can change these but many settings will crash it
+	'intCropWidth': int(math.floor(0.98 * intWidth)),
+	'intCropHeight': int(math.floor(0.98 * intHeight))
 	}
 
 	objectTo = process_autozoom({
-		'dblShift': 100.0,
-		'dblZoom': 1.25,
-		'objectFrom': objectFrom
+	#'dblCenterU': intWidth / 2.0, #Not sure of effect
+	#'dblCenterV': intHeight / 2.0, #Not sure of effect
+	'dblShift': 100.0, #original
+	#'dblShift': 10.0, #try this with large zooms
+	#'dblZoom': 40.25, #x50 zoom
+	'dblZoom': 1.25, #original
+	'objectFrom': objectFrom
 	})
 
 	numpyResult = process_kenburns({
-		'dblSteps': numpy.linspace(0.0, 1.0, 75).tolist(),
-		'objectFrom': objectFrom,
-		'objectTo': objectTo,
-		'boolInpaint': True
+	#'dblSteps': numpy.linspace(0.0, 40.0, 800).tolist(), #example very large zoom, lot sof extra frames
+	'dblSteps': numpy.linspace(0.0, 1.0, 75).tolist(), #original settings
+	#'dblSteps': numpy.linspace(0.0, 20.0, 275).tolist(), # Zoom x20 and more frames 
+	'objectFrom': objectFrom,
+	'objectTo': objectTo,
+	'boolInpaint': True
 	})
 
-	moviepy.editor.ImageSequenceClip(sequence=[ numpyFrame[:, :, ::-1] for numpyFrame in numpyResult + list(reversed(numpyResult))[1:] ], fps=arguments_strFps).write_videofile(arguments_strOut)
+	moviepy.editor.ImageSequenceClip(sequence=[ numpyFrame[:, :, ::-1] for numpyFrame in numpyResult + list(reversed(numpyResult))[1:] ], fps=float(arguments_strFps)).write_videofile(arguments_strOut, bitrate=arguments_strBitRate)
 	# end

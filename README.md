@@ -1,3 +1,28 @@
+# Colab Link [Colab-Ken-Burns-High-Resolution](https://github.com/JonathanFly/3d-ken-burns/blob/master/3D_Ken_Burns_HighResolution.ipynb)
+
+# This is the pressreset Colab with a couple of bug fixes and some extra information. I only updated fullrez.py
+
+# Multi-FPS-Full-Rez-3d-Ken-Burns)
+This is a fork of the original from sniklaus. It takes an image and generates a parallaxed video from the image. The original readme is below. 2 new scripts have been created. multi.py and fullrez.py. Both allow for you to select the output FPS. 
+
+## fullrez.py usage
+fullrez will process the image at full resolution. It takes the same flags as autozoom.py. You can process HD (1920x1080) and 2k (3840x2160) images on a 16GB card, and possibly a 11GB card. 4k is out of the question.
+### WARNING: THIS TAKES A TON OF GPU MEMORY UP TO 10GB+ FOR LARGE IMAGES
+```
+python fullrez.py --fps 240 --in ./images/doublestrike.jpg --out ./autozoom.mp4
+```
+## multi.py
+multi will take a directory of images and then output them as movies with the same file names as the originals. This processes them at the original resolution. It will then zip the files when complete to a zip file named download.zip. You can also bypass the zip file creation if you wish using the --nozip flag set to Y. It resizes the images the same way as the original. You MUST use a trailing slash on the directory names. There is no sanity check for it. If you run a ton of images at once, you risk running out of GPU memory. However, I've processed up to 8 without issue on 16GB GPU memory.
+```
+python multi.py --fps 120 --indir ./images/ --outdir ./videos/ --zipname myzipfile.zip --nozip Y
+```
+
+## autozoom.py
+Standard autozoom.py has been altered to accept the fps flag as it outputs 25fps by default.
+```
+python autozoom.py --fps 24 --in ./images/doublestrike.jpg --out ./autozoom.mp4
+```
+
 # 3d-ken-burns
 This is a reference implementation of 3D Ken Burns Effect from a Single Image [1] using PyTorch. Given a single input image, it animates this still image with a virtual camera scan and zoom subject to motion parallax. Should you be making use of our work, please cite our paper [1].
 
